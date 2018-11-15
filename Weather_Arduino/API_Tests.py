@@ -4,16 +4,18 @@ Uses the Accuweather API to display current weather in Seattle, WA for next 12 h
 
 This will be used to display hourly weather on a LED strip with colors relating to weather conditions. 
 """
+
 import requests
 import datetime
 
-api_path = 'C:/Users/JakeLaptop/Documents/GitHub/LiveWeather_Arduino/API_KEY.txt'
-with open(api_path, "r") as file: api_token = file.read()
+current_w_path = 'C:/Users/JakeLaptop/Documents/GitHub/LiveWeather_Arduino/Current_Weather_API_Address.txt'
+future_w_path = 'C:/Users/JakeLaptop/Documents/GitHub/LiveWeather_Arduino/Future_Weather_API_Address.txt'
+with open(current_w_path, "r") as file: api_address_curr = file.read()
+with open(future_w_path, "r") as file: api_address = file.read()
 
 #A separate API function is used for current and future weather conditions, api_address_curr, recieves current weather.
-api_address_curr = 'http://dataservice.accuweather.com/currentconditions/v1/351409?apikey=' + api_token + '%20&language=en-us&details=false'
-api_address = 'http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/351409?apikey='+ api_token + '&language=en-us&details=false&metric=false'
 r = requests.get(api_address)
+f = requests.get(api_address_curr)
 
 #Will more than likely separate in the future to create multiple functions.
 def Phrase(hour):
@@ -22,7 +24,6 @@ def Phrase(hour):
     """
     if hour == 0:
         #Necessary for current weather since Accuweather's API has two separate functions for current vs. future
-        f = requests.get(api_address_curr)
         for key, value in f.json()[0].items():
             if key == 'WeatherText':
                 time = datetime.datetime.now().hour
