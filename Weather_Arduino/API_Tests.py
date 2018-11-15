@@ -5,6 +5,9 @@ Uses the Accuweather API to display current weather in Seattle, WA for next 12 h
 This will be used to display hourly weather on a LED strip with colors relating to weather conditions. 
 """
 
+#Current Bugs: Time between 9AM and 12PM and being subtracted by 12.
+
+import time
 import requests
 import datetime
 
@@ -17,48 +20,58 @@ with open(future_w_path, "r") as file: api_address = file.read()
 r = requests.get(api_address)
 f = requests.get(api_address_curr)
 
-#Will more than likely separate in the future to create multiple functions.
-def Phrase(hour):
-    """
-    Based on the hour being evaluated, time and conditions are found and displayed
-    """
-    if hour == 0:
-        #Necessary for current weather since Accuweather's API has two separate functions for current vs. future
-        for key, value in f.json()[0].items():
-            if key == 'WeatherText':
-                time = datetime.datetime.now().hour
-                #Requires simplification, this is just the current way to get datetime to properly output adjusted hours.
-                if time > 24:
-                    time = time - 24
-                    ampm = "AM"
-                elif time > 12 & time < 24:
-                    time = time - 12
-                    ampm = "PM"
-                    if time == 12:
-                        ampm = "AM"
-                else:
-                    ampm = datetime.datetime.now().strftime("%p")
+#For future work of outputting data in csv file or other file to be read into Arduino code
+output_weather = []
+output_time = []
+output_dict = [dict() for x in range(0,11)]
 
-                print("Weather at " + str(time) +""+ ampm + " is " + value)
-    #For all other instances besides current weather
+#For Dev. code
+current_hour = 0
+
+"""
+Code currently in development
+"""
+def Weather_Update():
+    for i in range(0,12):
+        #Current Hour Weather
+        if i == 0:
+            for key, value in f.json()[0].items():
+                if key == "WeatherText":
+                    AMPM(current_hour)
+                    output_weather.append(value) 
+        #Future Hour Weather
+        else:
+            for key, value in r.json()[i-1].items():
+                if key == "IconPhrase":
+                    future_hour = datetime.datetime.now().hour + i
+                    AMPM(future_hour)
+                    output_weather.append(value)
+
+
+def AMPM(time):
+    print(str(time))
+    if time > 24:
+        time = time - 24
+        ampm = "AM"
+    elif time > 12 & time < 24:
+        print('elif')
+        time = time - 12
+        ampm = "PM"
+        if time == 12:
+            ampm = "AM"
     else:
-        for key, value in r.json()[hour - 1].items():
-            if key == 'IconPhrase':
-                time = datetime.datetime.now().hour + i
-                if time > 24:
-                    time = time - 24
-                    ampm = "AM"
-                elif time > 12 & time < 24:
-                    time = time - 12
-                    ampm = "PM"
-                    if time == 12:
-                        ampm = "AM"
-                else:
-                    ampm = datetime.datetime.now().strftime("%p")
+        ampm = datetime.datetime.now().strftime("%p")
+    output_time.append(str(time) + ampm) 
 
-                print("Weather at " + str(time) + ampm+ "" + " is " + value)
 
-#Used to only evaluate current and future 11 hours, since free API access is only allowed 12 hours in total. 
-for i in range(0,11):
-    Phrase(i)
+while True:
+    time.sleep(5)
+    if datetime.datetime.now().hour != current_hour:
+        current_hour = datetime.datetime.now().hour
+        Weather_Update()
+        print(str(output_weather))
+        print(str(output_time))
+    else:
+        pass
+
 
